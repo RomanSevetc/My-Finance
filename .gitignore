@@ -1,0 +1,33 @@
+# Django (backend)
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+media/
+venv/
+.env
+
+# Node.js (frontend)
+node_modules/
+dist/
+*.local
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# System files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Vite/React
+*.env
+.env.local
+.env.development
+.env.production
+.cache/
+.temp/
