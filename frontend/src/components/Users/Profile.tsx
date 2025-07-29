@@ -40,7 +40,6 @@ const Profile = () => {
                 }
 
                 const data = await response.json();
-                console.log('Данные профиля:', data);
                 setUserData(data);
             } catch (err) {
                 console.error('Ошибка:', err);
@@ -56,7 +55,6 @@ const Profile = () => {
             const file = event.target.files[0];
             const url = URL.createObjectURL(file);
             setPreviewUrl(url);
-            console.log('Выбран файл:', file.name, 'URL:', url);
             await handleAvatarUpload(file);
         }
     };
@@ -85,7 +83,6 @@ const Profile = () => {
             }
 
             const data = await response.json();
-            console.log('Ответ сервера:', data);
             setUserData({...userData!, avatar: `${data.avatar}?t=${new Date().getTime()}`});
             setPreviewUrl(null);
             if (fileInputRef.current) {

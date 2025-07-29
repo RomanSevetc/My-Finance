@@ -1,6 +1,5 @@
 import {useNavigate, useLocation} from 'react-router-dom';
 import {AppBar, Toolbar, Box, Button, Typography} from '@mui/material';
-import HomeIcon from '@mui/icons-material/Home';
 import MoneyOffIcon from '@mui/icons-material/MoneyOff';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import PersonIcon from '@mui/icons-material/Person';
@@ -13,7 +12,6 @@ const Header = () => {
     const location = useLocation();
 
     const navItems = [
-        {path: '/', label: 'Главная', icon: <HomeIcon sx={{mr: 0.5}}/>},
         {path: '/expenses', label: 'Расходы', icon: <MoneyOffIcon sx={{mr: 0.5}}/>},
         {path: '/income', label: 'Доходы', icon: <AttachMoneyIcon sx={{mr: 0.5}}/>},
         {path: '/analytics', label: 'Аналитика', icon: <PieChartIcon sx={{mr: 0.5}}/>},
@@ -22,7 +20,6 @@ const Header = () => {
 
     return (
         <AppBar
-            position="fixed"
             sx={{
                 bgcolor: 'background.paper',
                 color: 'text.primary',
