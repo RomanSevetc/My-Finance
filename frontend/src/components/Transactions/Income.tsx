@@ -1,6 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, TextField, Button, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Collapse,
+  IconButton,
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 import type { Transaction } from '../../../types/transaction.types.ts';
 
 const Income = () => {
@@ -16,6 +36,13 @@ const Income = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
+  // const [sortBy, setSortBy] = useState<'category' | 'amount' | ''>('');
+  // const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  // const [searchQuery, setSearchQuery] = useState('');
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const tableRef = useRef<HTMLTableElement>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -54,6 +81,19 @@ const Income = () => {
     fetchTransactions();
   }, [navigate]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (tableRef.current && !tableRef.current.contains(event.target as Node)) {
+        setShowDateFilter(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
@@ -82,7 +122,6 @@ const Income = () => {
         description: formData.description,
         date: formData.date,
       };
-      console.log('Submitting payload:', payload);
 
       const response = await fetch('http://localhost:8000/api/transactions/create', {
         method: 'POST',
@@ -100,8 +139,15 @@ const Income = () => {
 
       const data = await response.json();
       setTransactions([...transactions, data]);
-      setFormData({ amount: '', category: '', customCategory: '', description: '', date: new Date().toISOString().split('T')[0] });
+      setFormData({
+        amount: '',
+        category: '',
+        customCategory: '',
+        description: '',
+        date: new Date().toISOString().split('T')[0],
+      });
       setIsCustomCategory(false);
+      setShowForm(false);
       alert('Доход успешно добавлен');
     } catch (err: any) {
       setError(err.message || 'Не удалось создать транзакцию');
@@ -120,7 +166,7 @@ const Income = () => {
       const response = await fetch(`http://localhost:8000/api/transactions/${transactionId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Token ${token}`,
+          Authorization: `Token ${token}`,
         },
       });
 
@@ -129,7 +175,6 @@ const Income = () => {
         throw new Error(errorData.error || 'Ошибка при удалении транзакции');
       }
 
-      // Удаляем транзакцию из состояния
       setTransactions(transactions.filter((t) => t.id !== transactionId));
       alert('Доход успешно удален');
     } catch (err: any) {
@@ -138,81 +183,225 @@ const Income = () => {
     }
   };
 
+  const filteredAndSortedTransactions = useMemo(() => {
+    let result = [...transactions];
+
+    // Фильтрация по диапазону дат
+    if (dateRange.startDate && dateRange.endDate) {
+      result = result.filter((t) => {
+        const transactionDate = new Date(t.date);
+        const startDate = new Date(dateRange.startDate);
+        const endDate = new Date(dateRange.endDate);
+        return transactionDate >= startDate && transactionDate <= endDate;
+      });
+    }
+
+    /*
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      result = result.filter(
+        (t) =>
+          t.category.toLowerCase().includes(lowerQuery) ||
+          (t.description && t.description.toLowerCase().includes(lowerQuery))
+      );
+    }
+    */
+
+    /*
+    if (sortBy) {
+      result.sort((a, b) => {
+        if (sortBy === 'category') {
+          const comparison = a.category.localeCompare(b.category);
+          return sortOrder === 'asc' ? comparison : -comparison;
+        } else if (sortBy === 'amount') {
+          const aAmount = parseFloat(a.amount);
+          const bAmount = parseFloat(b.amount);
+          return sortOrder === 'asc' ? aAmount - bAmount : bAmount - aAmount;
+        }
+        return 0;
+      });
+    }
+    */
+
+    return result;
+  }, [transactions, dateRange /*, sortBy, sortOrder, searchQuery */]);
+
   return (
-    <Box sx={{ p: 3, mt: 10 }}>
-      <Typography variant="h4">Доходы</Typography>
-      {error && <Typography color="error">{error}</Typography>}
-      <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, display: 'flex', gap: 2 }}>
-        <TextField
-          label="Сумма"
-          type="number"
-          value={formData.amount}
-          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-          required
-        />
-        <FormControl sx={{ minWidth: 120 }}>
-          <InputLabel>Категория</InputLabel>
-          {isCustomCategory ? (
-            <TextField
-              label="Своя категория"
-              value={formData.customCategory}
-              onChange={(e) => setFormData({ ...formData, customCategory: e.target.value })}
-              required
-            />
-          ) : (
-            <Select
-              value={formData.category}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === 'custom') {
-                  setIsCustomCategory(true);
-                  setFormData({ ...formData, category: '' });
-                } else {
-                  setIsCustomCategory(false);
-                  setFormData({ ...formData, category: value, customCategory: '' });
-                }
-              }}
-              required
-            >
-              {categories.map((cat) => (
-                <MenuItem key={cat} value={cat}>{cat}</MenuItem>
-              ))}
-              <MenuItem value="custom">Своя категория</MenuItem>
-            </Select>
-          )}
-        </FormControl>
-        <TextField
-          label="Описание"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-        />
-        <TextField
-          label="Дата"
-          type="date"
-          value={formData.date}
-          onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-          required
-        />
-        <Button type="submit" variant="contained">Добавить доход</Button>
-      </Box>
-      <Box sx={{ mt: 4 }}>
+    <Box sx={{ p: 3, mt: 10, maxWidth: 1200, mx: 'auto' }}>
+      <Typography variant="h4" gutterBottom>
+        Доходы
+      </Typography>
+      {error && (
+        <Typography color="error" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
+      )}
+
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h5">Список доходов</Typography>
-        {transactions.map((t) => (
-          <Box key={t.id} sx={{ p: 1, borderBottom: '1px solid #ccc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography>
-              {t.date} | {t.category} | {t.amount} руб. | {t.description}
-            </Typography>
-            <Button
-              variant="contained"
-              color="error"
-              size="small"
-              onClick={() => handleDelete(t.id)}
-            >
-              Удалить
-            </Button>
-          </Box>
-        ))}
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setShowForm(!showForm)}
+        >
+          {showForm ? 'Скрыть форму' : 'Добавить доход'}
+        </Button>
       </Box>
+
+      <Collapse in={showForm}>
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{
+            mb: 4,
+            p: 3,
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            boxShadow: 1,
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 2,
+          }}
+        >
+          <TextField
+            label="Сумма"
+            type="number"
+            value={formData.amount}
+            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+            required
+            sx={{ flex: '1 1 200px' }}
+          />
+          <FormControl sx={{ flex: '1 1 200px' }}>
+            <InputLabel sx={{
+              backgroundColor: (theme) => theme.palette.background.paper,
+              px: 1,
+              borderRadius: 1,
+            }}>
+              Категория
+            </InputLabel>
+            {isCustomCategory ? (
+              <TextField
+                label="Своя категория"
+                value={formData.customCategory}
+                onChange={(e) => setFormData({ ...formData, customCategory: e.target.value })}
+                required
+              />
+            ) : (
+              <Select
+                value={formData.category}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === 'custom') {
+                    setIsCustomCategory(true);
+                    setFormData({ ...formData, category: '' });
+                  } else {
+                    setIsCustomCategory(false);
+                    setFormData({ ...formData, category: value, customCategory: '' });
+                  }
+                }}
+                required
+              >
+                {categories.map((cat) => (
+                  <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                ))}
+                <MenuItem value="custom">Своя категория</MenuItem>
+              </Select>
+            )}
+          </FormControl>
+          <TextField
+            label="Описание"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            sx={{ flex: '1 1 200px' }}
+          />
+          <TextField
+            label="Дата"
+            type="date"
+            value={formData.date}
+            InputLabelProps={{ shrink: true }}
+            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            required
+            sx={{ flex: '1 1 70px' }}
+          />
+          <Button type="submit" variant="contained" sx={{ alignSelf: 'flex-start' }}>
+            Добавить
+          </Button>
+        </Box>
+      </Collapse>
+
+      <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 1 }}>
+        <Table ref={tableRef}>
+          <TableHead>
+            <TableRow sx={{ bgcolor: 'primary.light' }}>
+              <TableCell
+                sx={{ fontWeight: 'bold', cursor: 'pointer' }}
+                onClick={() => setShowDateFilter(true)}
+              >
+                Дата
+                <Collapse in={showDateFilter}>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
+                    <TextField
+                      label="Дата с"
+                      type="date"
+                      value={dateRange.startDate}
+                      onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      size="small"
+                      sx={{ width: 140 }}
+                    />
+                    <TextField
+                      label="Дата по"
+                      type="date"
+                      value={dateRange.endDate}
+                      onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      size="small"
+                      sx={{ width: 140 }}
+                    />
+                  </Box>
+                </Collapse>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Категория</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Сумма</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Описание</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Действия</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredAndSortedTransactions.length > 0 ? (
+              filteredAndSortedTransactions.map((t) => (
+                <TableRow
+                  key={t.id}
+                  sx={{
+                    '&:hover': { bgcolor: 'action.hover' },
+                    transition: 'background-color 0.2s',
+                  }}
+                >
+                  <TableCell>{t.date}</TableCell>
+                  <TableCell>{t.category}</TableCell>
+                  <TableCell>{t.amount} руб.</TableCell>
+                  <TableCell>{t.description || '-'}</TableCell>
+                  <TableCell>
+                    <IconButton
+                      color="error"
+                      onClick={() => handleDelete(t.id)}
+                      size="small"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  <Typography>Нет доходов</Typography>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 };
