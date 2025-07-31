@@ -19,6 +19,7 @@ const Profile = () => {
             return;
         }
 
+        //Загрузка информации о профиле
         const fetchProfile = async () => {
             try {
                 const response = await fetch('http://localhost:8000/api/profile/', {
@@ -50,6 +51,7 @@ const Profile = () => {
         fetchProfile();
     }, [navigate]);
 
+    //Изменение файла аватара
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
             const file = event.target.files[0];
@@ -59,6 +61,7 @@ const Profile = () => {
         }
     };
 
+    //Загрузка аватара
     const handleAvatarUpload = async (file: File) => {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -99,6 +102,7 @@ const Profile = () => {
         }
     };
 
+    //Выход из профиля
     const handleLogout = async () => {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -127,6 +131,7 @@ const Profile = () => {
         }
     };
 
+    //Клик на аватар
     const handleAvatarClick = () => {
         if (fileInputRef.current) {
             fileInputRef.current.click();

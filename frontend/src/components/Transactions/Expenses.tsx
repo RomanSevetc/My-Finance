@@ -104,6 +104,7 @@ const Expense = () => {
         fetchAllCategories();
     }, [navigate]);
 
+    //Закрытие формы
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (tableRef.current && !tableRef.current.contains(event.target as Node)) {
@@ -123,6 +124,7 @@ const Expense = () => {
         }
     }, [isCustomCategory]);
 
+    //Создание расхода
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
@@ -190,6 +192,8 @@ const Expense = () => {
         }
     };
 
+
+    //Удаление расхода
     const handleDelete = async (transactionId: number) => {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -218,6 +222,7 @@ const Expense = () => {
         }
     };
 
+    //Выбор даты отображение расходов
     const filteredAndSortedTransactions = useMemo(() => {
         let result = [...transactions];
 

@@ -105,7 +105,7 @@ const Income = () => {
         fetchAllCategories();
     }, [navigate]);
 
-
+    //Закрытие формы
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (tableRef.current && !tableRef.current.contains(event.target as Node)) {
@@ -125,6 +125,7 @@ const Income = () => {
         }
     }, [isCustomCategory]);
 
+    //Создание дохода
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
@@ -192,6 +193,7 @@ const Income = () => {
         }
     };
 
+    //Удаление дохода
     const handleDelete = async (transactionId: number) => {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -220,6 +222,7 @@ const Income = () => {
         }
     };
 
+    //Выбор даты отображение доходов
     const filteredAndSortedTransactions = useMemo(() => {
         let result = [...transactions];
 
