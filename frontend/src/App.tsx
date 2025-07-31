@@ -7,6 +7,7 @@ import Income from './components/Transactions/Income';
 import Expenses from './components/Transactions/Expenses';
 import Analytics from './components/Analytics/Analytics';
 import AuthPage from './pages/AuthPage';
+import MainPage from './pages/MainPage';
 import {Box, Typography} from '@mui/material';
 import {Navigate} from 'react-router-dom';
 import type {JSX} from "react";
@@ -29,11 +30,7 @@ function App() {
             <Header/>
             <Box component="main" sx={{flexGrow: 1}}>
                 <Routes>
-                    <Route path="/" element={
-                        <div style={{padding: '20px', marginTop: '80px'}}>
-                            <h1>Welcome to my app</h1>
-                        </div>
-                    }/>
+                    <Route path="/" element={<ProtectedRoute><MainPage/></ProtectedRoute>}/>
                     <Route path="/profile" element={<ProtectedRoute><Profile/></ProtectedRoute>}/>
                     <Route path="/income" element={<ProtectedRoute><Income/></ProtectedRoute>}/>
                     <Route path="/expenses" element={<ProtectedRoute><Expenses/></ProtectedRoute>}/>
